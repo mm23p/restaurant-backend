@@ -1,0 +1,32 @@
+{
+  "development": {
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "mysql",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": true
+      }
+    }
+  },
+  "test": {
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "mysql",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": true
+      }
+    }
+  },
+  "production": {
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "mysql",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": true
+      }
+    }
+  }
+}
