@@ -33,4 +33,4 @@ db.sequelize.sync({ alter: true })
   .catch((error) => {
     console.error("❌ Sequelize sync failed:", error);
   });
-module.exports = app;
+module.exports = app;  
