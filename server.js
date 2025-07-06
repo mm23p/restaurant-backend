@@ -30,9 +30,10 @@ app.get('/', (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
+const HOST = '0.0.0.0'; 
 
 db.sequelize.sync({ alter: true }).then(() => {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
+  app.listen(PORT, HOST, () => {
+    console.log(`🚀 Server is running at http://${HOST}:${PORT}`);
   });
 });
