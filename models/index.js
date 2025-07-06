@@ -1,5 +1,3 @@
-// models/index.js
-
 'use strict';
 
 require('dotenv').config();
@@ -7,6 +5,7 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
+const mysql2 = require('mysql2'); // ✅ Explicitly import mysql2
 const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || 'development';
 const config = require(__dirname + '/../config/config.json')[env];
@@ -14,29 +13,27 @@ const db = {};
 
 let sequelize;
 if (config.use_env_variable) {
-  // --- THIS IS THE CORRECTED CONFIGURATION ---
   sequelize = new Sequelize(process.env[config.use_env_variable], {
     dialect: 'mysql',
-    // We are adding a pool configuration to manage connections more robustly.
+    dialectModule: mysql2, // ✅ Use mysql2 as the driver
     pool: {
       max: 5,
       min: 0,
       acquire: 30000,
       idle: 10000
     },
-    // This explicitly tells the mysql2 driver how to behave.
-    // The `insecureAuth` option can sometimes resolve tricky handshake issues.
     dialectOptions: {
       insecureAuth: true
     }
   });
 } else {
-  sequelize = new Sequelize(config.database, config.username, config.password, config);
+  sequelize = new Sequelize(config.database, config.username, config.password, {
+    ...config,
+    dialectModule: mysql2 // ✅ Also support local fallback if needed
+  });
 }
 
-// ... The rest of the file is completely unchanged ...
-// The code that reads model files and runs associations is still correct.
-
+// Load all model files in this directory
 fs
   .readdirSync(__dirname)
   .filter(file => {
@@ -52,6 +49,7 @@ fs
     db[model.name] = model;
   });
 
+// Apply model associations if defined
 Object.keys(db).forEach(modelName => {
   if (db[modelName].associate) {
     db[modelName].associate(db);
