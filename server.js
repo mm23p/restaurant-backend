@@ -1,12 +1,11 @@
-require('dotenv').config();
+/* require('dotenv').config();
 
-// 2. Import Modules
 const express = require('express');
 const cors = require('cors');
-// --- THIS IS THE KEY CHANGE ---
-// We now import the fully configured sequelize instance from our central models hub.
 const { sequelize } = require('./models');
-
+const db = require('./models');
+app.use(cors());
+app.use(express.json());
 // 3. Import all your route files
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -19,7 +18,7 @@ const changeRequestRoutes = require('./routes/changeRequestRoutes');
 
 // 4. Initialize Express App
 const app = express();
-const PORT = process.env.PORT || 5000;
+//const PORT = process.env.PORT || 5000;
 
 const frontendURL = process.env.FRONTEND_URL || "http://localhost:3000";
 
@@ -31,8 +30,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 // 5. Middleware Setup
-app.use(cors());
-app.use(express.json());
+
 
 // 6. Define API Routes
 app.use('/api/auth', authRoutes);
@@ -44,6 +42,10 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/requests', changeRequestRoutes);
 
+
+app.get('/', (req, res) => {
+  res.send('Restaurant POS Backend is running!');
+});
 // 7. Start the Server
 const startServer = async () => {
   try {
@@ -62,5 +64,44 @@ const startServer = async () => {
   }
 
 };
+module.exports = app; */
 
-startServer();
+// server.js
+
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+const db = require('./models'); // This now imports from models/index.js
+
+const app = express();
+
+// --- Middleware ---
+// This flexible CORS setting is good for development.
+// We will lock this down later once we have our frontend URL.
+app.use(cors()); 
+app.use(express.json());
+
+// --- API Routes ---
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/menu', require('./routes/menuRoutes'));
+app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/receipts', require('./routes/receiptRoutes'));
+app.use('/api/reports', require('./routes/reportRoutes'));
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+app.use('/api/requests', require('./routes/changeRequestRoutes'));
+
+// Basic welcome route
+app.get('/', (req, res) => {
+  res.send('Restaurant POS Backend is running!');
+});
+
+// --- REMOVE THE OLD app.listen() BLOCK ---
+// const PORT = process.env.PORT || 5000;
+// db.sequelize.sync({ alter: true }).then(() => {
+//   app.listen(PORT, () => console.log(`🚀 Server is running at http://localhost:${PORT}`));
+// });
+
+// --- ADD THIS NEW EXPORT LINE ---
+// This allows Vercel to use your Express app as a serverless function.
+module.exports = app;
