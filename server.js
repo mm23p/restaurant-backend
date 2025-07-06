@@ -1,18 +1,21 @@
+// server.js
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
-const db = require('./models'); // This now imports from models/index.js
+const db = require('./models');
 
 const app = express();
 
-const frontendURL = process.env.FRONTEND_URL || "http://localhost:3000";
+// Set CORS origin only from env variable (no fallback to localhost for production)
+const allowedOrigin = process.env.FRONTEND_URL;
+if (!allowedOrigin) {
+  console.warn("Warning: FRONTEND_URL is not set. CORS might block requests.");
+}
+app.use(cors({ origin: allowedOrigin }));
 
-app.use(cors({
-  origin: frontendURL
-}));
 app.use(express.json());
 
-// --- API Routes ---
+// Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/menu', require('./routes/menuRoutes'));
@@ -22,15 +25,14 @@ app.use('/api/reports', require('./routes/reportRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/requests', require('./routes/changeRequestRoutes'));
 
-// Basic welcome route
 app.get('/', (req, res) => {
   res.send('Restaurant POS Backend is running!');
 });
-db.sequelize.sync({ alter: true })
-  .then(() => {
-    console.log("✅ Database connected and synced");
-  })
-  .catch((error) => {
-    console.error("❌ Sequelize sync failed:", error);
+
+const PORT = process.env.PORT || 5000;
+
+db.sequelize.sync({ alter: true }).then(() => {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server is running on port ${PORT}`);
   });
-module.exports = app;  
+});

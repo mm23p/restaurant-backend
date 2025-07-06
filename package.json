@@ -1,15 +1,14 @@
 {
   "name": "restaurant-backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Backend API for Restaurant POS system",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "engines": {
     "node": "18.x"
   },
