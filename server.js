@@ -29,6 +29,11 @@ app.get('/', (req, res) => {
   res.send('Restaurant POS Backend is running!');
 });
 
+app.get('/api/ping', (req, res) => {
+  res.send('pong');
+});
+
+
 const PORT = process.env.PORT || 5000;
 const HOST = '0.0.0.0'; 
 
