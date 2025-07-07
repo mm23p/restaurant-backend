@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const db = require('./models');
+const path = require('path');
 
 const app = express();
 
@@ -42,6 +43,11 @@ app.get('/', (req, res) => {
 
 app.get('/api/ping', (req, res) => {
   res.send('pong');
+});
+
+// At the end of your server.js (after all other routes)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
 // Launch server
