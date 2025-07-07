@@ -39,5 +39,11 @@ module.exports = (sequelize, DataTypes) => {
     tableName: 'orders',
     timestamps: true
   });
+
+  Order.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'waiter'
+});
+
   return Order;
 };
