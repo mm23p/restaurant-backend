@@ -45,11 +45,6 @@ app.get('/api/ping', (req, res) => {
   res.send('pong');
 });
 
-// At the end of your server.js (after all other routes)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
-});
-
 // Launch server
 const PORT = process.env.PORT || 5000;
 const HOST = '0.0.0.0';
