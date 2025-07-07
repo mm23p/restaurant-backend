@@ -99,11 +99,11 @@ router.get('/waiter-performance', authenticate, isAdminOrManager, async (req, re
       ],
       include: [{
          model: User,
-  as: 'waiter', // match Order.js association
+  as: 'user',
   attributes: ['full_name'],
   required: true,
       }],
-      group: ['user_id', 'waiter.id'],
+      group: ['user_id', 'user.id'],
       order: [[literal('totalSales'), 'DESC']],
     });
 
