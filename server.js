@@ -6,12 +6,22 @@ const db = require('./models');
 
 const app = express();
 
-// Set CORS origin only from env variable (no fallback to localhost for production)
-const allowedOrigin = process.env.FRONTEND_URL;
-if (!allowedOrigin) {
-  console.warn("Warning: FRONTEND_URL is not set. CORS might block requests.");
-}
-app.use(cors({ origin: allowedOrigin }));
+// ✅ Fix CORS: Allow frontend in production + localhost for development
+const allowedOrigins = [
+  'https://restaurant-frontend-ah3z.onrender.com',
+  'http://localhost:3000'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 
 app.use(express.json());
 
@@ -25,6 +35,7 @@ app.use('/api/reports', require('./routes/reportRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/requests', require('./routes/changeRequestRoutes'));
 
+// Test routes
 app.get('/', (req, res) => {
   res.send('Restaurant POS Backend is running!');
 });
@@ -33,9 +44,9 @@ app.get('/api/ping', (req, res) => {
   res.send('pong');
 });
 
-
+// Launch server
 const PORT = process.env.PORT || 5000;
-const HOST = '0.0.0.0'; 
+const HOST = '0.0.0.0';
 
 db.sequelize.sync({ alter: true }).then(() => {
   app.listen(PORT, HOST, () => {
