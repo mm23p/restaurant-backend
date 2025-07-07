@@ -64,12 +64,13 @@ router.post('/', authenticate, async (req, res) => {
     const orderToCreate = {
       user_id: req.user.id,
       total_price: calculatedTotalPrice,
+      status: 'completed',
       customer_name: customer_name,
       table: table,
     };
 
     // --- DEBUG LOG #2: CHECK THE OBJECT BEING SAVED ---
-    console.log('[POST /orders] STEP 2: Object being passed to Order.create():', orderToCreate);
+    //console.log('[POST /orders] STEP 2: Object being passed to Order.create():', orderToCreate);
 
     const newOrder = await Order.create(orderToCreate, { transaction });
 
