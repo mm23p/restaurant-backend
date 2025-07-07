@@ -19,7 +19,7 @@ const { Order, OrderItem, MenuItem, User } = require('../models');
  * @access  Private, Admin
  * @query   date (e.g., "2023-10-27")
  */
-/* router.get('/waiter-performance', authenticate, isAdmin, async (req, res) => {
+router.get('/waiter-performance', authenticate, isAdminOrManager, async (req, res) => {
     try {
         const { date } = req.query;
         if (!date) {
@@ -71,8 +71,8 @@ const { Order, OrderItem, MenuItem, User } = require('../models');
         res.status(500).json({ error: 'Failed to generate waiter performance report.' });
     }
 });
- */
 
+/* 
 router.get('/waiter-performance', authenticate, isAdminOrManager, async (req, res) => {
   try {
     const { date } = req.query;
@@ -121,7 +121,7 @@ router.get('/waiter-performance', authenticate, isAdminOrManager, async (req, re
     console.error("Error fetching waiter performance:", err);
     res.status(500).json({ error: 'Failed to generate waiter performance report.' });
   }
-});
+}); */
 /**
  * @route   GET /api/reports/menu-item-sales
  * @desc    Get sales performance grouped by menu item for a date range
