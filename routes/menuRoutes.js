@@ -122,29 +122,41 @@ router.delete('/:id', authenticate, isManagerOrAdmin, async (req, res) => {
   const user = req.user;
   const { id } = req.params;
 
+  // Admin logic remains the same
   if (user.role === 'admin') {
     try {
       const deleted = await MenuItem.destroy({ where: { id } });
       if (deleted) return res.status(200).json({ message: 'Item deleted successfully' });
       else return res.status(404).json({ error: 'Item not found' });
     } catch (err) {
+      console.error('Error during admin delete:', err);
       return res.status(500).json({ error: 'Failed to delete item' });
     }
   }
 
+  // Manager logic is now more robust
   if (user.role === 'manager') {
-    // For a delete request, the payload is minimal, just noting what is being deleted.
-    const itemToDelete = await MenuItem.findByPk(id);
-    if (!itemToDelete) return res.status(404).json({ error: 'Item to delete not found.' });
+    try {
+      const itemToDelete = await MenuItem.findByPk(id);
+      if (!itemToDelete) {
+        return res.status(404).json({ error: 'Item to delete not found.' });
+      }
 
-    await ChangeRequest.create({
-      requesterId: user.id,
-      requestType: 'MENU_ITEM_DELETE',
-      targetId: id,
-      payload: { name: itemToDelete.name }, // Store the name for the admin's reference
-      requesterNotes: req.body.requesterNotes || 'Requesting deletion of this item.'
-    });
-    return res.status(202).json({ message: 'Request to delete item has been submitted for approval.' });
+      await ChangeRequest.create({
+        requesterId: user.id,
+        requestType: 'MENU_ITEM_DELETE',
+        targetId: id,
+        payload: { name: itemToDelete.name }, // Store the name for the admin's reference
+        // We no longer rely on req.body. We just use a standard note.
+        requesterNotes: `Manager requested deletion of item "${itemToDelete.name}".`
+      });
+
+      return res.status(202).json({ message: 'Request to delete item has been submitted for approval.' });
+
+    } catch (err) {
+      console.error('Error creating deletion request for manager:', err);
+      return res.status(500).json({ error: 'Failed to create deletion request.' });
+    }
   }
 });
 
