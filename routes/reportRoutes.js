@@ -46,22 +46,25 @@ router.get('/waiter-performance', authenticate, isAdminOrManager, async (req, re
                 attributes: ['full_name'],
                 required: true,
             }],
-            group: ['user.id', 'user.full_name'],
+          group: ['user.id'],
             order: [[literal('totalSales'), 'DESC']],
-            raw: true, 
+           
         });
-
-           const report = performanceData.map(p => {
-            const totalSales = parseFloat(p.totalSales);
-            const totalOrders = parseInt(p.totalOrders, 10);
+        
+        const report = performanceData.map(p => {
+            const totalSales = parseFloat(p.get('totalSales'));
+            const totalOrders = parseInt(p.get('totalOrders'), 10);
+            const user = p.get('user'); // Access the nested user object
             return {
-                waiterId: p['user.id'],
-                waiterName: p['user.full_name'],
+                waiterId: user.id,
+                waiterName: user.full_name,
                 totalOrders: totalOrders,
                 totalSales: totalSales.toFixed(2),
-                averageOrderValue: (totalSales / totalOrders).toFixed(2),
+                averageOrderValue: totalOrders > 0 ? (totalSales / totalOrders).toFixed(2) : "0.00",
             }
         });
+
+           
 
         res.json(report);
 
@@ -111,19 +114,21 @@ router.get('/menu-item-sales', authenticate, isAdminOrManager, async (req, res) 
           required: true,
         }
       ],
-      group: ['menu_item_id', 'MenuItem.id', 'MenuItem.name', 'MenuItem.category'],
+    
+       group: ['MenuItem.id'],
       order: [[literal('totalRevenue'), 'DESC']],
-      raw: true,
     });
 
-     const report = salesData.map(s => ({
-            menuItemId: s['MenuItem.id'],
-            itemName: s['MenuItem.name'],
-            category: s['MenuItem.category'],
-            totalQuantitySold: parseInt(s.totalQuantitySold, 10),
-            totalRevenue: parseFloat(s.totalRevenue || 0).toFixed(2),
-        }));
-
+       const report = salesData.map(s => {
+      const menuItem = s.get('MenuItem'); // Access the nested MenuItem object
+      return {
+        menuItemId: menuItem.id,
+        itemName: menuItem.name,
+        category: menuItem.category,
+        totalQuantitySold: parseInt(s.getDataValue('totalQuantitySold'), 10),
+        totalRevenue: parseFloat(s.getDataValue('totalRevenue') || 0).toFixed(2),
+      }
+    });
     res.json(report);
 
   } catch (err) {
