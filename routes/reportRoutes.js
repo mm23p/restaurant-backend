@@ -38,7 +38,7 @@ router.get('/waiter-performance', authenticate, isAdminOrManager, async (req, re
             attributes: [
               
                 [fn('COUNT', col('Order.id')), 'totalOrders'],
-                [fn('SUM', col('total_amount')), 'totalSales'],
+                [fn('SUM', col('total_price')), 'totalSales'],
             ],
             include: [{
                 model: User,
@@ -51,13 +51,12 @@ router.get('/waiter-performance', authenticate, isAdminOrManager, async (req, re
            
         });
         
-        const report = performanceData.map(p => {
-            const totalSales = parseFloat(p.get('totalSales'));
-            const totalOrders = parseInt(p.get('totalOrders'), 10);
-            const user = p.get('user'); // Access the nested user object
+         const report = performanceData.map(p => {
+            const totalSales = parseFloat(p.dataValues.totalSales);
+            const totalOrders = parseInt(p.dataValues.totalOrders, 10);
             return {
-                waiterId: user.id,
-                waiterName: user.full_name,
+                waiterId: p.dataValues.user.id,
+                waiterName: p.dataValues.user.full_name,
                 totalOrders: totalOrders,
                 totalSales: totalSales.toFixed(2),
                 averageOrderValue: totalOrders > 0 ? (totalSales / totalOrders).toFixed(2) : "0.00",
