@@ -233,7 +233,7 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // POST /menu - Add a new menu item (Admin only)
-router.post('/', authenticate, isAdmin, async (req, res) => {
+/* router.post('/', authenticate, isAdmin, async (req, res) => {
   try {
     const newItem = await MenuItem.create(req.body);
     res.status(201).json(newItem);
@@ -242,6 +242,32 @@ router.post('/', authenticate, isAdmin, async (req, res) => {
       return res.status(400).json({ error: 'A menu item with this name already exists.' });
     }
     res.status(400).json({ error: 'Failed to add menu item' });
+  }
+}); */
+
+router.post('/', authenticate, async (req, res) => {
+  const user = req.user;
+  const payload = req.body;
+
+  if (user.role === 'admin') {
+    try {
+      const newItem = await MenuItem.create(payload);
+      return res.status(201).json(newItem);
+    } catch (err) {
+      // Handle errors as needed
+      return res.status(400).json({ error: 'Failed to add menu item' });
+    }
+  } else if (user.role === 'manager') {
+    await ChangeRequest.create({
+      requesterId: user.id,
+      requestType: 'MENU_ITEM_ADD',
+      targetId: null,
+      payload,
+      requesterNotes: payload.requesterNotes || null
+    });
+    return res.status(202).json({ message: 'Add item request submitted for approval.' });
+  } else {
+    return res.status(403).json({ error: 'Access denied. Admin or Manager role required.' });
   }
 });
 
@@ -280,7 +306,7 @@ router.put('/:id', authenticate, isManagerOrAdmin, async (req, res) => {
 });
 
 // DELETE /menu/:id - Delete a menu item (Admin only)
-router.delete('/:id', authenticate, isAdmin, async (req, res) => {
+/* router.delete('/:id', authenticate, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const deleted = await MenuItem.destroy({ where: { id } });
@@ -293,6 +319,32 @@ router.delete('/:id', authenticate, isAdmin, async (req, res) => {
     console.error(`DELETE /menu/${req.params.id} error:`, err);
     res.status(500).json({ error: 'Failed to delete item' });
   }
+}); */
+router.delete('/:id', authenticate, async (req, res) => {
+  const user = req.user;
+  const id = req.params.id;
+
+  if (user.role === 'admin') {
+    try {
+      const deleted = await MenuItem.destroy({ where: { id } });
+      if (deleted) return res.status(200).json({ message: 'Item deleted successfully' });
+      else return res.status(404).json({ error: 'Item not found' });
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to delete item' });
+    }
+  } else if (user.role === 'manager') {
+    await ChangeRequest.create({
+      requesterId: user.id,
+      requestType: 'MENU_ITEM_DELETE',
+      targetId: id,
+      payload: null,
+      requesterNotes: req.body.requesterNotes || null
+    });
+    return res.status(202).json({ message: 'Delete item request submitted for approval.' });
+  } else {
+    return res.status(403).json({ error: 'Access denied. Admin or Manager role required.' });
+  }
 });
+
 
 module.exports = router;
