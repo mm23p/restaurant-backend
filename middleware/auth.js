@@ -35,10 +35,18 @@ const isManager = (req, res, next) => {
   return res.status(403).json({ error: 'Access denied. Manager role required.' });
 };
 
+const isAdminOrManager = (req, res, next) => {
+  if (req.user && (req.user.role === 'admin' || req.user.role === 'manager')) {
+    return next();
+  }
+  return res.status(403).json({ error: 'Access denied. Manager or Admin role required.' });
+};
+
 // --- THIS IS THE CORRECTED EXPORT BLOCK ---
 // We now include isManager and remove the unnecessary SECRET_KEY export.
 module.exports = {
   authenticate,
   isAdmin,
-  isManager
+  isManager,
+  isAdminOrManager 
 };

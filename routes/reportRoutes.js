@@ -4,17 +4,12 @@ const express = require('express');
 const router = express.Router();
 const { Op, fn, col, literal } = require('sequelize');
 
-const { authenticate, isAdmin } = require('../middleware/auth');
+const { authenticate, isAdminOrManager } = require('../middleware/auth');
 const { Order, OrderItem, MenuItem, User } = require('../models');
 
 
 // New middleware to allow both Admin and Manager roles
-const isAdminOrManager = (req, res, next) => {
-  if (req.user && (req.user.role === 'admin' || req.user.role === 'manager')) {
-    return next();
-  }
-  return res.status(403).json({ error: 'Access denied. Admin or Manager role required.' });
-};
+
 
 // routes/reportRoutes.js
 
