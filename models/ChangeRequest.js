@@ -2,6 +2,8 @@
 
 const { DataTypes } = require('sequelize');
 
+
+console.log("<<<<< LOADING THE LATEST ChangeRequest.js MODEL - VERSION 2 >>>>>");
 // The entire file is now wrapped in this function
 module.exports = (sequelize, DataTypes) => {
   const ChangeRequest = sequelize.define('ChangeRequest', {
