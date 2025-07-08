@@ -74,29 +74,30 @@ router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
   
   // Manager logic is now more robust
   if (user.role === 'manager') {
-    /* try {
-      // --- THE FIX IS HERE ---
-      // We create the object first, and only include the fields we have.
-      // We no longer explicitly set `targetId: null`.
-      const requestData = {
-        requesterId: user.id,
-        requestType: 'MENU_ITEM_ADD',
-        payload: payload,
-        requesterNotes: payload.requesterNotes || null
-      };
+    
+  try {
+    const requestData = {
+      requesterId: user.id,
+      requestType: 'MENU_ITEM_ADD',
+      payload: payload,
+      requesterNotes: payload.requesterNotes || null
+      // --- THE FIX ---
+      // We are completely OMITTING the `targetId` key from this object.
+      // We are not setting it to `null` or anything else.
+      // By omitting it, we let the database handle the default value.
+    };
 
-      await ChangeRequest.create(requestData);
-      
-      return res.status(202).json({ message: 'Request to add item has been submitted for approval.' });
-    } catch (err) {
-      // Add a specific error log for this case
-      console.error('Error creating ADD request for manager:', err);
-      return res.status(500).json({ error: 'Failed to create add item request.' });
-    } */
+    // This console log will help us verify the data being sent
+    console.log("Attempting to create ChangeRequest with data:", requestData);
 
-       console.log(">>>> MANAGER ADD ITEM ROUTE HAS BEEN REACHED SUCCESSFULLY (DATABASE BYPASSED) <<<<");
-    return res.status(202).json({ message: 'DEBUG: Request received, database call was bypassed.' });
+    await ChangeRequest.create(requestData);
+    
+    return res.status(202).json({ message: 'Request to add item has been submitted for approval.' });
+  } catch (err) {
+    console.error('FINAL ATTEMPT - Error creating ADD request for manager:', err);
+    return res.status(500).json({ error: 'Failed to create add item request.' });
   }
+}
 });
 
 router.delete('/:id', authenticate, isManagerOrAdmin, async (req, res) => {
