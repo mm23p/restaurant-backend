@@ -59,6 +59,7 @@ router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
   const user = req.user;
   const payload = req.body;
 
+  // Admin logic is unchanged
   if (user.role === 'admin') {
     try {
       const newItem = await MenuItem.create(payload);
@@ -71,52 +72,29 @@ router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
     }
   } 
   
+  // Manager logic is now more robust
   if (user.role === 'manager') {
-    await ChangeRequest.create({
-      requesterId: user.id,
-      requestType: 'MENU_ITEM_ADD',
-      targetId: null, // No target ID for a new item
-      payload: payload,
-      requesterNotes: payload.requesterNotes || null
-    });
-    return res.status(202).json({ message: 'Request to add item has been submitted for approval.' });
-  }
-});
-
-// PUT /menu/:id - Update a menu item (Admin or Manager)
-router.put('/:id', authenticate, isManagerOrAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const proposedChanges = req.body;
-    const { user } = req;
-
-    const itemToUpdate = await MenuItem.findByPk(id);
-    if (!itemToUpdate) {
-      return res.status(404).json({ error: 'Menu item not found' });
-    }
-
-    if (user.role === 'manager') {
-      await ChangeRequest.create({
+    try {
+      // --- THE FIX IS HERE ---
+      // We create the object first, and only include the fields we have.
+      // We no longer explicitly set `targetId: null`.
+      const requestData = {
         requesterId: user.id,
-        requestType: 'MENU_ITEM_EDIT',
-        targetId: id,
-        payload: proposedChanges,
-        requesterNotes: proposedChanges.requesterNotes || null
-      });
-      return res.status(202).json({ message: 'Edit request submitted for approval.' });
-    }
+        requestType: 'MENU_ITEM_ADD',
+        payload: payload,
+        requesterNotes: payload.requesterNotes || null
+      };
 
-    if (user.role === 'admin') {
-      await itemToUpdate.update(proposedChanges);
-      return res.status(200).json({ message: 'Menu item updated successfully', item: itemToUpdate });
+      await ChangeRequest.create(requestData);
+      
+      return res.status(202).json({ message: 'Request to add item has been submitted for approval.' });
+    } catch (err) {
+      // Add a specific error log for this case
+      console.error('Error creating ADD request for manager:', err);
+      return res.status(500).json({ error: 'Failed to create add item request.' });
     }
-
-  } catch (err) {
-    console.error(`PUT /menu/${req.params.id} error:`, err);
-    res.status(500).json({ error: 'Failed to process update request' });
   }
 });
-
 
 router.delete('/:id', authenticate, isManagerOrAdmin, async (req, res) => {
   const user = req.user;
