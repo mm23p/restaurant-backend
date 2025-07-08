@@ -74,7 +74,7 @@ router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
   
   // Manager logic is now more robust
   if (user.role === 'manager') {
-    try {
+    /* try {
       // --- THE FIX IS HERE ---
       // We create the object first, and only include the fields we have.
       // We no longer explicitly set `targetId: null`.
@@ -92,7 +92,10 @@ router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
       // Add a specific error log for this case
       console.error('Error creating ADD request for manager:', err);
       return res.status(500).json({ error: 'Failed to create add item request.' });
-    }
+    } */
+
+       console.log(">>>> MANAGER ADD ITEM ROUTE HAS BEEN REACHED SUCCESSFULLY (DATABASE BYPASSED) <<<<");
+    return res.status(202).json({ message: 'DEBUG: Request received, database call was bypassed.' });
   }
 });
 
