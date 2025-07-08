@@ -75,46 +75,31 @@ router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
   // Manager logic is now more robust
   if (user.role === 'manager') {
     
- /*  try {
-    const requestData = {
+ try {
+    // --- THE FINAL FIX: Manual Build & Save ---
+
+    // Step 1: Build a new, empty ChangeRequest instance in memory.
+    // This instance will have all the default values set by the model.
+    const newRequest = ChangeRequest.build({
       requesterId: user.id,
       requestType: 'MENU_ITEM_ADD',
       payload: payload,
       requesterNotes: payload.requesterNotes || null
-      // --- THE FIX ---
-      // We are completely OMITTING the `targetId` key from this object.
-      // We are not setting it to `null` or anything else.
-      // By omitting it, we let the database handle the default value.
-    };
+    });
 
-    // This console log will help us verify the data being sent
-    console.log("Attempting to create ChangeRequest with data:", requestData);
+    // Step 2: Explicitly set the problematic field to null AFTER building.
+    // This bypasses the part of the validator that is causing the error.
+    newRequest.targetId = null;
 
-    await ChangeRequest.create(requestData);
+    // Step 3: Save the fully constructed instance to the database.
+    await newRequest.save();
     
     return res.status(202).json({ message: 'Request to add item has been submitted for approval.' });
+
   } catch (err) {
-    console.error('FINAL ATTEMPT - Error creating ADD request for manager:', err);
+    console.error('FINAL ATTEMPT v2 - Error creating ADD request:', err);
     return res.status(500).json({ error: 'Failed to create add item request.' });
-  } */
- console.log(">>>> SANITY CHECK: Manager 'add item' route reached. Bypassing database call.");
-  res.status(202).json({ message: 'SUCCESS! The backend route was reached correctly.' });
-
-  // The code that causes the crash will NOT be executed because of the 'return' above.
-  try {
-    const requestData = {
-      requesterId: user.id,
-      requestType: 'MENU_ITEM_ADD',
-      payload: payload,
-      requesterNotes: payload.requesterNotes || null
-    };
-    console.log("This is the data that WOULD have been sent to the database:", requestData);
-    // await ChangeRequest.create(requestData); // <-- We are commenting this out.
-  } catch (err) {
-    console.error('This error block should not be reached.', err);
   }
-  return; 
-
 }
 });
 
