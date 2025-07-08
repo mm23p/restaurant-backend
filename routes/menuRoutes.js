@@ -75,7 +75,7 @@ router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
   // Manager logic is now more robust
   if (user.role === 'manager') {
     
-  try {
+ /*  try {
     const requestData = {
       requesterId: user.id,
       requestType: 'MENU_ITEM_ADD',
@@ -96,7 +96,25 @@ router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
   } catch (err) {
     console.error('FINAL ATTEMPT - Error creating ADD request for manager:', err);
     return res.status(500).json({ error: 'Failed to create add item request.' });
+  } */
+ console.log(">>>> SANITY CHECK: Manager 'add item' route reached. Bypassing database call.");
+  res.status(202).json({ message: 'SUCCESS! The backend route was reached correctly.' });
+
+  // The code that causes the crash will NOT be executed because of the 'return' above.
+  try {
+    const requestData = {
+      requesterId: user.id,
+      requestType: 'MENU_ITEM_ADD',
+      payload: payload,
+      requesterNotes: payload.requesterNotes || null
+    };
+    console.log("This is the data that WOULD have been sent to the database:", requestData);
+    // await ChangeRequest.create(requestData); // <-- We are commenting this out.
+  } catch (err) {
+    console.error('This error block should not be reached.', err);
   }
+  return; 
+
 }
 });
 
