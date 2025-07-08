@@ -45,12 +45,10 @@ app.get('/api/ping', (req, res) => {
   res.send('pong');
 });
 
-// Launch server
-const PORT = process.env.PORT || 5000;
-const HOST = '0.0.0.0';
+const PORT = process.env.PORT || 10000; // Render provides the port via this env var
 
-db.sequelize.sync({ alter: true }).then(() => {
-  app.listen(PORT, HOST, () => {
-    console.log(`🚀 Server is running at http://${HOST}:${PORT}`);
-  });
+// We no longer use sequelize.sync() in production.
+// We just start listening for requests immediately.
+app.listen(PORT, () => {
+  console.log(`🚀 Server is running and listening on port ${PORT}`);
 });

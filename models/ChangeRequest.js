@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
    requestType: {
   type: DataTypes.ENUM('MENU_ITEM_EDIT', 'MENU_ITEM_ADD', 'MENU_ITEM_DELETE', 'INVENTORY_QUANTITY_UPDATE'), // <-- NEW
   allowNull: false,
-  field: 'request_type'
+  field: 'request_type' 
 }, 
    targetId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true, field: 'target_id' },
     payload: { type: DataTypes.JSON, allowNull: false },
