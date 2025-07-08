@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
-const { MenuItem } = require('../models');
+const { MenuItem , ChangeRequest} = require('../models');
 
 // A helper middleware for routes accessible by both Admins and Managers
 const isManagerOrAdmin = (req, res, next) => {
@@ -21,12 +21,13 @@ router.get('/', authenticate, async (req, res) => {
   try {
     const whereClause = {};
 
-    // For waiters, only show items ready for sale
+    // For waiters, only show items that are approved.
+    // The frontend will handle displaying the "unavailable/out of stock" status.
     if (req.user.role === 'waiter') {
       whereClause.approval_status = 'approved';
-      whereClause.is_available = true;
     }
 
+    // Admins and Managers will have an empty `whereClause`, so they see everything.
     const items = await MenuItem.findAll({ where: whereClause, order: [['name', 'ASC']] });
     res.json(items);
   } catch (err) {
@@ -34,6 +35,7 @@ router.get('/', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch menu items' });
   }
 });
+
 
 
 // GET /menu/categories - Get a unique list of all categories
@@ -67,20 +69,14 @@ router.get('/:id', authenticate, async (req, res) => {
   }
 });
 
-// POST /menu - Add a new menu item using the "Draft & Approve" pattern
 router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
-  const user = req.user;
-  const payload = req.body;
-
+  const { user, body: payload } = req;
   try {
     if (user.role === 'admin') {
-      // Admins create items that are instantly approved.
       const newItem = await MenuItem.create({ ...payload, approval_status: 'approved' });
       return res.status(201).json(newItem);
     }
-
     if (user.role === 'manager') {
-      // Managers create items as "drafts" that are pending and unavailable.
       const newItem = await MenuItem.create({ ...payload, approval_status: 'pending_approval', is_available: false });
       return res.status(202).json({ message: 'New item draft created and sent for approval.' });
     }
@@ -93,6 +89,7 @@ router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
 });
 
 
+/* 
 router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
   const user = req.user;
   const payload = req.body;
@@ -139,31 +136,9 @@ router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
     return res.status(500).json({ error: 'Failed to create add item request.' });
   }
 }
-});
+}); */
 
-router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
-  const user = req.user;
-  const payload = req.body;
 
-  try {
-    if (user.role === 'admin') {
-      // Admins create items that are instantly approved and available.
-      const newItem = await MenuItem.create({ ...payload, approval_status: 'approved' });
-      return res.status(201).json(newItem);
-    }
-
-    if (user.role === 'manager') {
-      // Managers create items as "drafts" that are pending and unavailable.
-      const newItem = await MenuItem.create({ ...payload, approval_status: 'pending_approval', is_available: false });
-      return res.status(202).json({ message: 'New item draft created and sent for approval.' });
-    }
-  } catch (err) {
-    if (err.name === 'SequelizeUniqueConstraintError') {
-      return res.status(400).json({ error: 'A menu item with this name already exists.' });
-    }
-    return res.status(400).json({ error: 'Failed to add menu item' });
-  }
-});
 
 router.post('/:id/approve', authenticate, isAdmin, async (req, res) => {
     try {
@@ -183,8 +158,7 @@ router.post('/:id/approve', authenticate, isAdmin, async (req, res) => {
 router.put('/:id', authenticate, isManagerOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const proposedChanges = req.body;
-    const { user } = req;
+    const { user, body: proposedChanges } = req;
 
     const itemToUpdate = await MenuItem.findByPk(id);
     if (!itemToUpdate) {
@@ -213,8 +187,7 @@ router.put('/:id', authenticate, isManagerOrAdmin, async (req, res) => {
 });
 
 router.delete('/:id', authenticate, isManagerOrAdmin, async (req, res) => {
-  const user = req.user;
-  const { id } = req.params;
+  const { user, params: { id } } = req;
 
   if (user.role === 'admin') {
     try {
@@ -232,7 +205,6 @@ router.delete('/:id', authenticate, isManagerOrAdmin, async (req, res) => {
       if (!itemToDelete) {
         return res.status(404).json({ error: 'Item to delete not found.' });
       }
-
       await ChangeRequest.create({
         requesterId: user.id,
         requestType: 'MENU_ITEM_DELETE',
@@ -246,7 +218,6 @@ router.delete('/:id', authenticate, isManagerOrAdmin, async (req, res) => {
     }
   }
 });
-
 
 
 module.exports = router;

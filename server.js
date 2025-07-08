@@ -34,7 +34,7 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/receipts', require('./routes/receiptRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
-//app.use('/api/requests', require('./routes/changeRequestRoutes'));
+app.use('/api/requests', require('./routes/changeRequestRoutes'));
 app.use('/api/approvals', require('./routes/approvalRoutes'));
 // Test routes
 app.get('/', (req, res) => {
