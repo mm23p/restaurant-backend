@@ -73,71 +73,28 @@ router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
   const { user, body: payload } = req;
   try {
     if (user.role === 'admin') {
+      // Admins create items that are instantly approved and available by default.
       const newItem = await MenuItem.create({ ...payload, approval_status: 'approved' });
       return res.status(201).json(newItem);
     }
+
     if (user.role === 'manager') {
-      const newItem = await MenuItem.create({ ...payload, approval_status: 'pending_approval', is_available: false });
+      // Managers create items as "drafts" that are pending and explicitly NOT available.
+      const newItem = await MenuItem.create({
+        ...payload,
+        approval_status: 'pending_approval',
+        is_available: false 
+      });
       return res.status(202).json({ message: 'New item draft created and sent for approval.' });
     }
   } catch (err) {
     if (err.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({ error: 'A menu item with this name already exists.' });
     }
+    console.error("Error in POST /menu:", err);
     return res.status(400).json({ error: 'Failed to add menu item' });
   }
 });
-
-
-/* 
-router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
-  const user = req.user;
-  const payload = req.body;
-
-  // Admin logic is unchanged
-  if (user.role === 'admin') {
-    try {
-      const newItem = await MenuItem.create(payload);
-      return res.status(201).json(newItem);
-    } catch (err) {
-      if (err.name === 'SequelizeUniqueConstraintError') {
-        return res.status(400).json({ error: 'A menu item with this name already exists.' });
-      }
-      return res.status(400).json({ error: 'Failed to add menu item' });
-    }
-  } 
-  
-  // Manager logic is now more robust
-  if (user.role === 'manager') {
-    
- try {
-    // --- THE FINAL FIX: Manual Build & Save ---
-
-    // Step 1: Build a new, empty ChangeRequest instance in memory.
-    // This instance will have all the default values set by the model.
-    const newRequest = ChangeRequest.build({
-      requesterId: user.id,
-      requestType: 'MENU_ITEM_ADD',
-      payload: payload,
-      requesterNotes: payload.requesterNotes || null
-    });
-
-    // Step 2: Explicitly set the problematic field to null AFTER building.
-    // This bypasses the part of the validator that is causing the error.
-    newRequest.targetId = null;
-
-    // Step 3: Save the fully constructed instance to the database.
-    await newRequest.save();
-    
-    return res.status(202).json({ message: 'Request to add item has been submitted for approval.' });
-
-  } catch (err) {
-    console.error('FINAL ATTEMPT v2 - Error creating ADD request:', err);
-    return res.status(500).json({ error: 'Failed to create add item request.' });
-  }
-}
-}); */
-
 
 
 router.post('/:id/approve', authenticate, isAdmin, async (req, res) => {
