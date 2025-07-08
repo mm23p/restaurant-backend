@@ -73,29 +73,29 @@ router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
   const { user, body: payload } = req;
   try {
     if (user.role === 'admin') {
-      // Admins create items that are instantly approved and available by default.
-      const newItem = await MenuItem.create({ ...payload, approval_status: 'approved' });
+      const newItem = await MenuItem.create(payload);
       return res.status(201).json(newItem);
     }
 
     if (user.role === 'manager') {
-      // Managers create items as "drafts" that are pending and explicitly NOT available.
-      const newItem = await MenuItem.create({
-        ...payload,
-        approval_status: 'pending_approval',
-        is_available: false 
+      // THIS IS THE CORRECT LOGIC: Create a ChangeRequest, NOT a MenuItem.
+      await ChangeRequest.create({
+        requesterId: user.id,
+        requestType: 'MENU_ITEM_ADD',
+        targetId: null, // targetId is null because we are adding a new item
+        payload: payload,
+        requesterNotes: payload.requesterNotes || 'Manager requesting to add this new item.'
       });
-      return res.status(202).json({ message: 'New item draft created and sent for approval.' });
+      return res.status(202).json({ message: 'Request to add item has been submitted for approval.' });
     }
   } catch (err) {
     if (err.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({ error: 'A menu item with this name already exists.' });
     }
     console.error("Error in POST /menu:", err);
-    return res.status(400).json({ error: 'Failed to add menu item' });
+    return res.status(400).json({ error: 'Failed to process add item request.' });
   }
 });
-
 
 router.post('/:id/approve', authenticate, isAdmin, async (req, res) => {
     try {

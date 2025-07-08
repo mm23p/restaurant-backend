@@ -34,64 +34,6 @@ router.get('/my-requests', authenticate, isManager, async (req, res) => {
 });
 
 
-/* router.post('/:id/approve', authenticate, isAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { adminNotes } = req.body;
-    const request = await ChangeRequest.findByPk(id);
-
-    if (!request || request.status !== 'PENDING') {
-      return res.status(404).json({ error: 'Request not found or already resolved.' });
-    }
-
-    if (request.requestType === 'MENU_ITEM_EDIT') {
-      const item = await MenuItem.findByPk(request.targetId);
-      if (item) {
-        await item.update(request.payload);
-      } else {
-        request.status = 'DENIED';
-        request.adminNotes = 'Auto-denied: Target item no longer exists.';
-        await request.save();
-        return res.status(404).json({ error: 'Target item not found; request denied.' });
-      }
-    } else if (request.requestType === 'MENU_ITEM_ADD') {
-      // Create new MenuItem using payload
-      try {
-        const newItem = await MenuItem.create(request.payload);
-        request.targetId = newItem.id; // Link new item id to the request
-      } catch (err) {
-        return res.status(500).json({ error: 'Failed to create new menu item.' });
-      }
-    } else if (request.requestType === 'MENU_ITEM_DELETE') {
-      // Delete MenuItem with targetId
-      const item = await MenuItem.findByPk(request.targetId);
-      if (item) {
-        await item.destroy();
-      } else {
-        request.status = 'DENIED';
-        request.adminNotes = 'Auto-denied: Target item no longer exists.';
-        await request.save();
-        return res.status(404).json({ error: 'Target item not found; request denied.' });
-      }
-    } else {
-      return res.status(400).json({ error: 'Unsupported request type.' });
-    }
-
-    // Mark request as approved
-    request.status = 'APPROVED';
-    request.approverId = req.user.id;
-    request.adminNotes = adminNotes || 'Approved.';
-    request.resolvedAt = new Date();
-    await request.save();
-
-    res.status(200).json({ message: 'Request approved.', request });
-  } catch (err) {
-    console.error(`POST /requests/${req.params.id}/approve error:`, err);
-    res.status(500).json({ error: 'Failed to approve request' });
-  }
-});
- */
-
 router.post('/:id/approve', authenticate, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
@@ -100,7 +42,6 @@ router.post('/:id/approve', authenticate, isAdmin, async (req, res) => {
       return res.status(404).json({ error: 'Request not found or already resolved.' });
     }
 
-    // --- NEW LOGIC TO HANDLE ADD/EDIT/DELETE ---
     switch (request.requestType) {
       case 'MENU_ITEM_EDIT':
         const itemToEdit = await MenuItem.findByPk(request.targetId);
@@ -109,8 +50,9 @@ router.post('/:id/approve', authenticate, isAdmin, async (req, res) => {
         break;
 
       case 'MENU_ITEM_ADD':
+        // This correctly creates a new MenuItem from the payload.
         const newItem = await MenuItem.create(request.payload);
-        request.targetId = newItem.id; // Store the ID of the newly created item
+        request.targetId = newItem.id;
         break;
       
       case 'MENU_ITEM_DELETE':
@@ -119,11 +61,9 @@ router.post('/:id/approve', authenticate, isAdmin, async (req, res) => {
         break;
 
       default:
-        // Handle INVENTORY_QUANTITY_UPDATE or other types here in the future
         return res.status(400).json({ error: 'Unsupported request type.' });
     }
 
-    // Mark request as approved
     request.status = 'APPROVED';
     request.approverId = req.user.id;
     request.adminNotes = req.body.adminNotes || 'Approved.';
@@ -134,10 +74,10 @@ router.post('/:id/approve', authenticate, isAdmin, async (req, res) => {
 
   } catch (err) {
     console.error(`POST /requests/${req.params.id}/approve error:`, err);
-    // You could also auto-deny the request here if something fails
     res.status(500).json({ error: `Failed to approve request: ${err.message}` });
   }
 });
+
 
 router.post('/:id/deny', authenticate, isAdmin, async (req, res) => {
   try {
