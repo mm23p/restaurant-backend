@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
   allowNull: false,
   field: 'request_type' 
 }, 
-   targetId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true, field: 'target_id' },
+   targetId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true, defaultValue: null, field: 'target_id' },
     payload: { type: DataTypes.JSON, allowNull: false },
     requesterNotes: { type: DataTypes.TEXT, allowNull: true, field: 'requester_notes' },
     adminNotes: { type: DataTypes.TEXT, allowNull: true, field: 'admin_notes' },
