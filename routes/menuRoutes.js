@@ -176,5 +176,10 @@ router.delete('/:id', authenticate, isManagerOrAdmin, async (req, res) => {
   }
 });
 
+router.get('/test-deploy-v3', (req, res) => {
+  console.log("!!!!!! DEPLOYMENT TEST V3 SUCCESSFUL !!!!!!");
+  res.status(200).send("DEPLOYMENT SUCCESSFUL - LATEST menuRoutes.js FILE IS RUNNING.");
+});
+
 
 module.exports = router;
