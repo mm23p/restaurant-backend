@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
-const { MenuItem , ChangeRequest} = require('../models');
+const { MenuItem , ChangeRequest, sequelize} = require('../models');
 
 // A helper middleware for routes accessible by both Admins and Managers
 const isManagerOrAdmin = (req, res, next) => {
@@ -69,7 +69,7 @@ router.get('/:id', authenticate, async (req, res) => {
   }
 });
 
-router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
+/* router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
   const { user, body: payload } = req;
   try {
     if (user.role === 'admin') {
@@ -94,6 +94,50 @@ router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
     }
     console.error("Error in POST /menu:", err);
     return res.status(400).json({ error: 'Failed to process add item request.' });
+  }
+}); */
+
+router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
+  const { user, body: payload } = req;
+
+  try {
+    if (user.role === 'admin') {
+      // Admin logic is fine and remains unchanged
+      const newItem = await MenuItem.create(payload);
+      return res.status(201).json(newItem);
+    }
+
+    if (user.role === 'manager') {
+      // --- THE RAW SQL QUERY SOLUTION ---
+      console.log("MANAGER ADD REQUEST: Bypassing Sequelize model validation and using raw SQL query.");
+
+      // Manually construct the SQL INSERT statement.
+      // We do not include `target_id` so the database will use its default (NULL).
+      const query = `
+        INSERT INTO change_requests 
+        (requester_id, request_type, payload, requester_notes, status, created_at, updated_at) 
+        VALUES (:requesterId, :requestType, :payload, :requesterNotes, 'PENDING', NOW(), NOW());
+      `;
+
+      // Provide the values safely as replacements.
+      await sequelize.query(query, {
+        replacements: {
+          requesterId: user.id,
+          requestType: 'MENU_ITEM_ADD',
+          payload: JSON.stringify(payload), // Payload must be a string for the JSON column
+          requesterNotes: payload.requesterNotes || `Manager request to add item: ${payload.name}`
+        },
+        type: sequelize.QueryTypes.INSERT
+      });
+      
+      return res.status(202).json({ message: 'Request to add item has been submitted for approval.' });
+    }
+  } catch (err) {
+    if (err.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({ error: 'A menu item with this name already exists.' });
+    }
+    console.error("Critical Error in POST /menu with raw query:", err);
+    return res.status(500).json({ error: 'Failed to process add item request.' });
   }
 });
 
