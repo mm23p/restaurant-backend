@@ -4,7 +4,7 @@ const router = express.Router();
 
 const { authenticate, isAdmin } = require('../middleware/auth');
 const { User } = require('../models');
-
+const { Op } = require('sequelize');
 // PUT /users/:id — edit user info (admin only)
 router.put('/:id', authenticate, isAdmin, async (req, res) => {
   try {
@@ -69,6 +69,24 @@ router.post('/',  async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to create user' });
+  }
+});
+
+router.get('/staff', authenticate, async (req, res) => {
+  try {
+    const staff = await User.findAll({
+      where: {
+        // Use Op.or to get users where the role is either 'waiter' or 'manager'
+        role: {
+          [Op.or]: ['waiter', 'manager']
+        }
+      },
+      attributes: ['id', 'username', 'full_name', 'role', 'is_active']
+    });
+    res.json(staff);
+  } catch (err) {
+    console.error("Error fetching staff list:", err);
+    res.status(500).json({ error: 'Failed to fetch staff list' });
   }
 });
 
