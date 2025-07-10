@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
-const { authenticate, isAdmin } = require('../middleware/auth');
+const { authenticate, isAdmin , isManagerOrAdmin} = require('../middleware/auth');
 const { Order, OrderItem, MenuItem, User, sequelize } = require('../models');
 
 // GET / - Get all orders with filtering (Admin only)
@@ -75,7 +75,7 @@ router.post('/', authenticate, async (req, res) => {
     const newOrder = await Order.create(orderToCreate, { transaction });
 
     // --- DEBUG LOG #3: CHECK THE RESULT FROM THE DATABASE ---
-    console.log('[POST /orders] STEP 3: Result from Order.create():', newOrder.toJSON());
+   // console.log('[POST /orders] STEP 3: Result from Order.create():', newOrder.toJSON());
 
     const orderItemsToCreate = items.map(item => ({
       order_id: newOrder.id,
@@ -95,10 +95,9 @@ router.post('/', authenticate, async (req, res) => {
   }
 });
 
-router.get('/', authenticate, isAdmin, async (req, res) => {
+router.get('/', authenticate, isManagerOrAdmin, async (req, res) => {
     try {
         const { waiter, startDate, endDate } = req.query;
-
         const findOptions = {
             include: [
                 { model: User, as: 'user', attributes: ['id', 'username', 'full_name'] },
