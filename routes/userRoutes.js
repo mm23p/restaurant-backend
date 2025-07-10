@@ -81,7 +81,7 @@ router.get('/staff', authenticate, async (req, res) => {
           [Op.or]: ['waiter', 'manager']
         }
       },
-      attributes: ['id', 'username', 'full_name', 'role', 'is_active']
+      attributes: ['id', 'username', 'full_name', 'role', 'is_active', 'last_known_token']
     });
     res.json(staff);
   } catch (err) {

@@ -5,6 +5,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { User } = require('../models');
+const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '8h' });
 
 const SECRET_KEY = process.env.JWT_SECRET || 'your_default_secret_for_development';
 
@@ -54,5 +55,11 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ error: 'Server error during login process.' });
   }
 });
+
+const userToUpdate = await User.findByPk(user.id);
+if (userToUpdate) {
+  userToUpdate.last_known_token = token;
+  await userToUpdate.save();
+}
 
 module.exports = router;
