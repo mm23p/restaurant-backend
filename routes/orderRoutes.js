@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
-const { authenticate, isAdmin , isManagerOrAdmin} = require('../middleware/auth');
+const { authenticate, isAdmin , isAdminOrManager} = require('../middleware/auth');
 const { Order, OrderItem, MenuItem, User, sequelize } = require('../models');
 
 // GET / - Get all orders with filtering (Admin only)
@@ -94,8 +94,7 @@ router.post('/', authenticate, async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
-
-router.get('/', authenticate, isManagerOrAdmin, async (req, res) => {
+router.get('/', authenticate, isAdminOrManager, async (req, res) => {
     try {
         const { waiter, startDate, endDate } = req.query;
         const findOptions = {
@@ -112,7 +111,6 @@ router.get('/', authenticate, isManagerOrAdmin, async (req, res) => {
 
         if (waiter) {
             findOptions.include[0].where = { full_name: { [Op.like]: `%${waiter}%` } };
-            findOptions.include[0].required = true;
         }
 
         if (startDate && endDate) {
@@ -126,9 +124,8 @@ router.get('/', authenticate, isManagerOrAdmin, async (req, res) => {
         const orders = await Order.findAll(findOptions);
         res.json(orders);
     } catch (err) {
-        console.error('Error fetching orders:', err);
+        console.error('Error fetching all orders:', err);
         res.status(500).json({ error: 'Failed to fetch orders' });
     }
 });
-
 module.exports = router;
