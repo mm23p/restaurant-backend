@@ -24,10 +24,15 @@ router.get('/my-orders', authenticate, async (req, res) => {
 
 
 
-
 router.post('/', authenticate, async (req, res) => {
+  // We start a transaction for data safety
   const transaction = await sequelize.transaction();
   try {
+    // --- THIS IS THE MOST IMPORTANT FIX ---
+    // We get the user ID DIRECTLY from the authenticated token via req.user.
+    // We completely ignore any userId that might be in the request body.
+    const userIdFromToken = req.user.id;
+    
     const { items, customer_name, table } = req.body;
     if (!Array.isArray(items) || items.length === 0) {
       throw new Error('Order must contain at least one item.');
@@ -36,11 +41,7 @@ router.post('/', authenticate, async (req, res) => {
     let calculatedTotalPrice = 0;
 
     for (const requestedItem of items) {
-      const menuItem = await MenuItem.findByPk(requestedItem.menu_item_id, {
-        transaction,
-        lock: transaction.LOCK.UPDATE
-      });
-
+      const menuItem = await MenuItem.findByPk(requestedItem.menu_item_id, { transaction });
       if (!menuItem) throw new Error(`Item with ID ${requestedItem.menu_item_id} not found.`);
       if (!menuItem.is_available) throw new Error(`'${menuItem.name}' is currently unavailable.`);
       
@@ -48,9 +49,8 @@ router.post('/', authenticate, async (req, res) => {
         if (menuItem.quantity < requestedItem.quantity) {
           throw new Error(`Not enough stock for '${menuItem.name}'.`);
         }
-        const newQuantity = menuItem.quantity - requestedItem.quantity;
-        menuItem.quantity = newQuantity;
-        if (newQuantity <= 0) {
+        menuItem.quantity -= requestedItem.quantity;
+        if (menuItem.quantity <= 0) {
             menuItem.is_available = false;
         }
         await menuItem.save({ transaction });
@@ -58,24 +58,15 @@ router.post('/', authenticate, async (req, res) => {
       calculatedTotalPrice += parseFloat(menuItem.price) * requestedItem.quantity;
     }
 
-    // --- DEBUG LOG #1: CHECK THE CALCULATION ---
-    console.log(`[POST /orders] STEP 1: Final calculated total price is: ${calculatedTotalPrice}`);
-
     const orderToCreate = {
-      user_id: req.user.id,
+      user_id: userIdFromToken, // <-- We use the secure ID from the token here
       total_price: calculatedTotalPrice,
       status: 'completed',
       customer_name: customer_name,
       table: table,
     };
 
-    // --- DEBUG LOG #2: CHECK THE OBJECT BEING SAVED ---
-    //console.log('[POST /orders] STEP 2: Object being passed to Order.create():', orderToCreate);
-
     const newOrder = await Order.create(orderToCreate, { transaction });
-
-    // --- DEBUG LOG #3: CHECK THE RESULT FROM THE DATABASE ---
-   // console.log('[POST /orders] STEP 3: Result from Order.create():', newOrder.toJSON());
 
     const orderItemsToCreate = items.map(item => ({
       order_id: newOrder.id,
@@ -94,6 +85,8 @@ router.post('/', authenticate, async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+
+
 router.get('/', authenticate, isAdminOrManager, async (req, res) => {
     try {
         const { waiter, startDate, endDate } = req.query;
