@@ -1,11 +1,11 @@
-const bcrypt = require('bcrypt');
-const express = require('express');
+import bcrypt from 'bcrypt';
+import express from 'express';
 const router = express.Router();
+import { authenticate, isAdmin } from '../middleware/auth.js'
+import db from '../models/index.js';
 
-const { authenticate, isAdmin } = require('../middleware/auth');
-const { User } = require('../models');
-const { Op } = require('sequelize');
-// PUT /users/:id — edit user info (admin only)
+const { User } = db;
+import Sequelize, { Op } from 'sequelize';
 router.put('/:id', authenticate, isAdmin, async (req, res) => {
   try {
     const id = req.params.id;
@@ -107,4 +107,4 @@ router.delete('/:id', authenticate, isAdmin, async (req, res) => {
   }
 });
 
-module.exports = router; 
+export default router;

@@ -1,9 +1,9 @@
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { authenticate } = require('../middleware/auth');
-const { MenuItem , ChangeRequest, sequelize} = require('../models');
-
+import { authenticate } from '../middleware/auth.js';
+import db from '../models/index.js';
+const { MenuItem, ChangeRequest, sequelize } = db;
 // A helper middleware for routes accessible by both Admins and Managers
 const isManagerOrAdmin = (req, res, next) => {
   if (req.user && (req.user.role === 'admin' || req.user.role === 'manager')) {
@@ -69,33 +69,7 @@ router.get('/:id', authenticate, async (req, res) => {
   }
 });
 
-/* router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
-  const { user, body: payload } = req;
-  try {
-    if (user.role === 'admin') {
-      const newItem = await MenuItem.create(payload);
-      return res.status(201).json(newItem);
-    }
 
-    if (user.role === 'manager') {
-      // THIS IS THE CORRECT LOGIC: Create a ChangeRequest, NOT a MenuItem.
-      await ChangeRequest.create({
-        requesterId: user.id,
-        requestType: 'MENU_ITEM_ADD',
-        targetId: null, // targetId is null because we are adding a new item
-        payload: payload,
-        requesterNotes: payload.requesterNotes || 'Manager requesting to add this new item.'
-      });
-      return res.status(202).json({ message: 'Request to add item has been submitted for approval.' });
-    }
-  } catch (err) {
-    if (err.name === 'SequelizeUniqueConstraintError') {
-      return res.status(400).json({ error: 'A menu item with this name already exists.' });
-    }
-    console.error("Error in POST /menu:", err);
-    return res.status(400).json({ error: 'Failed to process add item request.' });
-  }
-}); */
 router.post('/', authenticate, isManagerOrAdmin, async (req, res) => {
   const { user, body: payload } = req;
 
@@ -224,4 +198,4 @@ router.get('/test-deploy-v3', (req, res) => {
 });
 
 
-module.exports = router;
+export default router;

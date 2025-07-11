@@ -1,11 +1,10 @@
 // src/models/ChangeRequest.js
 
-const { DataTypes } = require('sequelize');
-
+import { DataTypes } from 'sequelize';
 
 console.log("<<<<< LOADING THE LATEST ChangeRequest.js MODEL - VERSION 2 >>>>>");
 // The entire file is now wrapped in this function
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   const ChangeRequest = sequelize.define('ChangeRequest', {
     // All your column definitions are unchanged
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

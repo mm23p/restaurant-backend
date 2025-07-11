@@ -1,16 +1,10 @@
 // routes/dashboardRoutes.js
-
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { Op, literal } = require('sequelize');
-/* const Order = require('../models/Order');
-const User = require('../models/User');
-const MenuItem = require('../models/MenuItem'); */ // --- 2. IMPORT MENUITEM MODEL ---
-const { authenticate, isAdmin } = require('../middleware/auth');
-//const { ChangeRequest, MenuItem, User } = require('../models');
-const { Order, User, MenuItem } = require('../models');
-
-
+import Sequelize, { Op,  literal } from 'sequelize';
+import db from '../models/index.js';
+const { MenuItem, Order, User } = db; 
+import { authenticate, isAdmin } from '../middleware/auth.js'; 
 router.get('/stats', authenticate, isAdmin, async (req, res) => {
     try {
         // --- Date setup for today and yesterday ---
@@ -80,4 +74,4 @@ router.get('/low-stock', authenticate, isAdmin, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

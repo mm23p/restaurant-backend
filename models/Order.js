@@ -1,9 +1,8 @@
 // src/models/Order.js
 
 'use strict';
-const { Model } = require('sequelize');
-
-module.exports = (sequelize, DataTypes) => {
+import { Model } from 'sequelize';
+export default(sequelize, DataTypes) => {
   class Order extends Model {
     static associate(models) {
       // An Order belongs to one User (the one who created it).

@@ -1,11 +1,12 @@
+// src/middleware/auth.js
 
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
-// --- SECURITY IMPROVEMENT: Use an environment variable for your secret key ---
-// This is much safer than writing the key directly in the code.
 const SECRET_KEY = process.env.JWT_SECRET || 'your_default_secret_for_development';
 
-const authenticate = (req, res, next) => {
+// --- THE FIX: Use 'export' before each function ---
+
+export const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Authorization token is missing or malformed' });
@@ -20,33 +21,26 @@ const authenticate = (req, res, next) => {
   }
 };
 
-const isAdmin = (req, res, next) => {
+export const isAdmin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     return next();
   }
-  // Reverted to a standard, clear error message
   return res.status(403).json({ error: 'Access denied. Admin role required.' });
 };
 
-const isManager = (req, res, next) => {
+export const isManager = (req, res, next) => {
   if (req.user && req.user.role === 'manager') {
     return next();
   }
   return res.status(403).json({ error: 'Access denied. Manager role required.' });
 };
 
-const isAdminOrManager = (req, res, next) => {
+export const isAdminOrManager = (req, res, next) => {
   if (req.user && (req.user.role === 'admin' || req.user.role === 'manager')) {
     return next();
   }
-  return res.status(403).json({ error: 'Access denied. Manager or Admin role required.' });
+  return res.status(403).json({ error: 'Access denied. Admin or Manager role required.' });
 };
 
-// --- THIS IS THE CORRECTED EXPORT BLOCK ---
-// We now include isManager and remove the unnecessary SECRET_KEY export.
-module.exports = {
-  authenticate,
-  isAdmin,
-  isManager,
-  isAdminOrManager 
-};
+// We no longer need the module.exports block at the bottom
+// module.exports = { ... }; // <-- DELETE THIS BLOCK

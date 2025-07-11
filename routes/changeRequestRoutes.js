@@ -1,8 +1,9 @@
-const express = require('express');
-const router = express.Router();
-const { authenticate, isAdmin, isManager } = require('../middleware/auth');
-const { ChangeRequest, MenuItem, User } = require('../models');
+import express from 'express';
 
+const router = express.Router();
+import { authenticate, isAdmin , isManager} from '../middleware/auth.js';
+import db from '../models/index.js'; 
+const { ChangeRequest, MenuItem, User } = db;
 // GET /requests - Get all pending requests (for Admin dashboard)
 router.get('/', authenticate, isAdmin, async (req, res) => {
   try {
@@ -100,4 +101,4 @@ router.post('/:id/deny', authenticate, isAdmin, async (req, res) => {
     res.status(500).json({ error: 'Failed to deny request' });
   }
 });
-module.exports = router;
+export default router;

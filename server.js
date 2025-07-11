@@ -1,18 +1,29 @@
-// server.js
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const db = require('./models');
-const path = require('path');
+// src/server.js
+
+import 'dotenv/config'; // Modern way to load environment variables at the very top
+import express from 'express';
+import cors from 'cors';
+import db from './models/index.js'; // Note the .js extension is required in ESM
+import path from 'path';
+
+// Import all your route files using the new ESM syntax
+import authRoutes from './routes/authRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import menuRoutes from './routes/menuRoutes.js';
+import orderRoutes from './routes/orderRoutes.js';
+import receiptRoutes from './routes/receiptRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
+import changeRequestRoutes from './routes/changeRequestRoutes.js';
+import approvalRoutes from './routes/approvalRoutes.js'; // <-- The missing import
 
 const app = express();
 
-// ✅ Fix CORS: Allow frontend in production + localhost for development
+// CORS configuration (no changes needed here)
 const allowedOrigins = [
   'https://restaurant-frontend-ah3z.onrender.com',
   'http://localhost:3000'
 ];
-
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -26,29 +37,27 @@ app.use(cors({
 
 app.use(express.json());
 
-// Routes
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/users', require('./routes/userRoutes'));
-app.use('/api/menu', require('./routes/menuRoutes'));
-app.use('/api/orders', require('./routes/orderRoutes'));
-app.use('/api/receipts', require('./routes/receiptRoutes'));
-app.use('/api/reports', require('./routes/reportRoutes'));
-app.use('/api/dashboard', require('./routes/dashboardRoutes'));
-app.use('/api/requests', require('./routes/changeRequestRoutes'));
-app.use('/api/approvals', require('./routes/approvalRoutes'));
+// --- Use the imported routes ---
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/menu', menuRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/receipts', receiptRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/requests', changeRequestRoutes);
+app.use('/api/approvals', approvalRoutes); // <-- THE CORRECTED LINE
+
 // Test routes
 app.get('/', (req, res) => {
   res.send('Restaurant POS Backend is running!');
 });
-
 app.get('/api/ping', (req, res) => {
   res.send('pong');
 });
 
-const PORT = process.env.PORT || 10000; // Render provides the port via this env var
-
-// We no longer use sequelize.sync() in production.
-// We just start listening for requests immediately.
+// Server launch block (no changes needed here)
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`🚀 Server is running and listening on port ${PORT}`);
 });

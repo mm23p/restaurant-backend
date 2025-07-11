@@ -1,59 +1,68 @@
+// src/models/index.js
+
 'use strict';
 
-require('dotenv').config(); // Load .env variables
+import 'dotenv/config';
+import fs from 'fs';
+import path from 'path';
+import Sequelize from 'sequelize';
+import mysql2 from 'mysql2';
+import { fileURLToPath } from 'url';
+import { createRequire } from 'module'; // <-- 1. Import the helper
 
-const fs = require('fs');
-const path = require('path');
-const Sequelize = require('sequelize');
-const mysql2 = require('mysql2'); // Use mysql2 explicitly
+// These lines correctly set up __dirname for ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// --- THIS IS THE FIX ---
+const require = createRequire(import.meta.url); // 2. Create a local require function
+const configJSON = require('../config/config.json'); // 3. Use it to load the JSON file
+// --------------------
+
 const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || 'development';
-const config = require(__dirname + '/../config/config.json')[env];
+const config = configJSON[env];
 const db = {};
 
 let sequelize;
-
 if (config.use_env_variable) {
-  // ✅ Connect using DATABASE_URL
   sequelize = new Sequelize(process.env[config.use_env_variable], {
-    dialect: 'mysql',
+    ...config,
+    dialect: 'mysql', // Explicitly set dialect
     dialectModule: mysql2,
     logging: false,
-    dialectOptions: {
-      // Uncomment if your DB host requires secure connection
-      // ssl: { rejectUnauthorized: false }
-    }
   });
 } else {
-  // Fallback in case you're using manual DB vars (optional)
-  sequelize = new Sequelize(
-    config.database,
-    config.username,
-    config.password,
-    {
-      ...config,
-      dialectModule: mysql2,
-      logging: false,
-    }
-  );
+  sequelize = new Sequelize(config.database, config.username, config.password, {
+    ...config,
+    dialectModule: mysql2,
+    logging: false,
+  });
 }
 
-// ✅ Automatically load all models in this folder
-fs.readdirSync(__dirname)
-  .filter(file =>
-    file.indexOf('.') !== 0 &&
-    file !== basename &&
-    file.slice(-3) === '.js' &&
-    file.indexOf('.test.js') === -1
-  )
-  .forEach(file => {
-    const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
-    db[model.name] = model;
-  });
+// Manually import and initialize each model
+import initUserModel from './User.js';
+import initMenuItemModel from './MenuItem.js';
+import initOrderModel from './Order.js';
+import initOrderItemModel from './OrderItem.js';
+import initChangeRequestModel from './ChangeRequest.js';
 
-// ✅ Run associations if defined
+const models = [
+  initUserModel,
+  initMenuItemModel,
+  initOrderModel,
+  initOrderItemModel,
+  initChangeRequestModel,
+];
+
+for (const initModel of models) {
+  const model = initModel(sequelize, Sequelize.DataTypes);
+  db[model.name] = model;
+}
+
+// Run associations
 Object.keys(db).forEach(modelName => {
-  if (db[modelName].associate) {
+  if (db[modelName] && db[modelName].associate) {
     db[modelName].associate(db);
   }
 });
@@ -61,4 +70,4 @@ Object.keys(db).forEach(modelName => {
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
-module.exports = db;
+export default db;

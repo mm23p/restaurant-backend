@@ -1,8 +1,7 @@
-const { DataTypes } = require('sequelize');
-
+import { DataTypes } from 'sequelize';
 // The entire model definition is now wrapped in this function.
 // It no longer connects to the database itself.
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   // We use sequelize.define() for consistency with your other models.
   const MenuItem = sequelize.define('MenuItem', {
     // All your column definitions are copied here exactly as they were.

@@ -1,11 +1,11 @@
 // routes/reportRoutes.js
-
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { Op, fn, col, literal } = require('sequelize');
-const { authenticate, isAdminOrManager } = require('../middleware/auth');
-const { Order, OrderItem, MenuItem, User } = require('../models');
+import Sequelize, { Op, fn, col, literal } from 'sequelize';
+import { authenticate, isAdminOrManager } from '../middleware/auth.js';
+import db from '../models/index.js';
 
+const { Order, OrderItem, MenuItem, User } = db;
 // routes/reportRoutes.js
 
 /**
@@ -188,4 +188,4 @@ router.get('/waiter-orders', authenticate, isAdminOrManager, async (req, res) =>
 });
 
 
-module.exports = router;
+export default router;

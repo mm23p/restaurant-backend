@@ -1,9 +1,11 @@
 // src/routes/approvalRoutes.js
 
-const express = require('express');
+import express from 'express';
+import { authenticate, isAdmin } from '../middleware/auth.js';
+import db from '../models/index.js';
+const { MenuItem, ChangeRequest, User } = db;
+
 const router = express.Router();
-const { authenticate, isAdmin } = require('../middleware/auth');
-const { MenuItem, ChangeRequest, User } = require('../models');
 
 // GET /api/approvals/pending - Get all items needing approval
 router.get('/pending', authenticate, isAdmin, async (req, res) => {
@@ -136,4 +138,4 @@ router.post('/:id/deny', authenticate, isAdmin, async (req, res) => {
         res.status(500).json({ error: `Failed to deny request: ${err.message}` });
     }
 });
-module.exports = router;
+export default router;

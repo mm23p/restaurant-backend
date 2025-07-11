@@ -1,11 +1,10 @@
 // routes/receiptRoutes.js
-
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { authenticate } = require('../middleware/auth'); 
+import { authenticate } from '../middleware/auth.js';
+import db from '../models/index.js';
 
-const { Order, OrderItem, MenuItem, User } = require('../models');
-
+const { Order, OrderItem, MenuItem, User } = db;
 
 router.get('/:id', authenticate, async (req, res) => {
   try {
@@ -54,4 +53,4 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 
-module.exports = router;
+export default router;

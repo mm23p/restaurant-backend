@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { Op } = require('sequelize');
-const { authenticate, isAdmin , isAdminOrManager} = require('../middleware/auth');
-const { Order, OrderItem, MenuItem, User, sequelize } = require('../models');
+import Sequelize, { Op} from 'sequelize';
+import { authenticate, isAdmin , isAdminOrManager} from '../middleware/auth.js';
+import db from '../models/index.js';
 
+const { MenuItem, Order, OrderItem, User, sequelize } = db;
 // GET / - Get all orders with filtering (Admin only)
 
 
@@ -121,4 +122,4 @@ router.get('/', authenticate, isAdminOrManager, async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch orders' });
     }
 });
-module.exports = router;
+export default router;

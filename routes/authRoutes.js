@@ -1,32 +1,25 @@
 // src/routes/authRoutes.js
 
-const express = require('express');
-const router = express.Router();
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const { User } = require('../models');
-const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '8h' });
+import express from 'express';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+import db from '../models/index.js'; 
+const { User } = db; 
 
+
+const router = express.Router();
 const SECRET_KEY = process.env.JWT_SECRET || 'your_default_secret_for_development';
 
+// This is the only route in this file.
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
-
-    // --- DEBUGGING LOG ---
-    // This will print the exact username your backend received from the frontend.
-    console.log(`[AUTH] Received login attempt for username: "${username}"`);
-    // ---
-
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password are required' });
     }
 
-    const user = await User.findOne({ where: { username: username } });
-
+    const user = await User.findOne({ where: { username } });
     if (!user) {
-      // This is the block that is currently running.
-      console.log(`[AUTH] Query Result: User "${username}" was NOT FOUND in the database.`);
       return res.status(404).json({ error: 'User not found' });
     }
 
@@ -35,15 +28,24 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Incorrect password' });
     }
 
+    // --- PAYLOAD IS DEFINED HERE ---
     const payload = {
       id: user.id,
       username: user.username,
       role: user.role,
-      full_name: user.full_name 
+      full_name: user.full_name
     };
 
+    // --- TOKEN IS CREATED HERE, USING THE PAYLOAD ---
     const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '8h' });
 
+    // --- SAVE THE TOKEN TO THE DATABASE FOR THIS USER ---
+    // This logic now correctly happens inside the route handler.
+    user.last_known_token = token;
+    await user.save();
+    console.log(`Token saved for user: ${user.username}`);
+
+    // Send the response
     res.json({
       message: 'Login successful',
       token,
@@ -56,10 +58,4 @@ router.post('/login', async (req, res) => {
   }
 });
 
-const userToUpdate = await User.findByPk(user.id);
-if (userToUpdate) {
-  userToUpdate.last_known_token = token;
-  await userToUpdate.save();
-}
-
-module.exports = router;
+export default router;
