@@ -87,39 +87,73 @@ router.post('/', authenticate, async (req, res) => {
   }
 });
 
-
 router.get('/', authenticate, isAdminOrManager, async (req, res) => {
     try {
         const { waiter, startDate, endDate } = req.query;
+
+        // --- NEW, MORE EXPLICIT QUERY ---
         const findOptions = {
+            // We select all columns from the Order table
+            attributes: { 
+                include: [
+                    // We manually add a new field called 'waiter_name' to the result
+                    // by selecting it from the associated 'user' table.
+                    [literal('`user`.`full_name`'), 'waiter_name']
+                ]
+            },
             include: [
-                { model: User, as: 'user', attributes: ['id', 'username', 'full_name'] },
+                { 
+                    model: User, 
+                    as: 'user', 
+                    attributes: [] // We don't need to select any attributes here anymore
+                },
                 {
                     model: OrderItem,
                     as: 'items',
+                    attributes: ['quantity'],
                     include: { model: MenuItem, attributes: ['name'] }
                 }
             ],
             order: [['createdAt', 'DESC']]
         };
 
+        // The filtering logic remains the same
+        let whereClause = {};
         if (waiter) {
-            findOptions.include[0].where = { full_name: { [Op.like]: `%${waiter}%` } };
+            // We filter on the associated user's full_name
+            whereClause['$user.full_name$'] = { [Op.like]: `%${waiter}%` };
         }
-
         if (startDate && endDate) {
             const start = new Date(startDate);
             start.setHours(0, 0, 0, 0);
             const end = new Date(endDate);
             end.setHours(23, 59, 59, 999);
-            findOptions.where = { createdAt: { [Op.between]: [start, end] } };
+            whereClause.createdAt = { [Op.between]: [start, end] };
+        }
+        if (Object.keys(whereClause).length > 0) {
+            findOptions.where = whereClause;
         }
         
         const orders = await Order.findAll(findOptions);
-        res.json(orders);
+        
+        // --- NEW MAPPING LOGIC ---
+        // We now need to format the response to match what the frontend expects.
+        const formattedOrders = orders.map(order => {
+            const orderJSON = order.toJSON();
+            // The user object might not be fully populated, so we use the 'waiter_name' we selected.
+            return {
+                ...orderJSON,
+                user: {
+                    full_name: orderJSON.waiter_name 
+                }
+            };
+        });
+
+        res.json(formattedOrders);
     } catch (err) {
         console.error('Error fetching all orders:', err);
         res.status(500).json({ error: 'Failed to fetch orders' });
     }
 });
+
 export default router;
