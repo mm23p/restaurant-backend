@@ -1,6 +1,6 @@
 import express from 'express';
 const router = express.Router();
-import Sequelize, { Op} from 'sequelize';
+import Sequelize, { Op, literal} from 'sequelize';
 import { authenticate, isAdmin , isAdminOrManager} from '../middleware/auth.js';
 import db from '../models/index.js';
 
