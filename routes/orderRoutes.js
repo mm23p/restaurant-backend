@@ -5,7 +5,6 @@ import { authenticate, isAdmin , isAdminOrManager} from '../middleware/auth.js';
 import db from '../models/index.js';
 
 const { MenuItem, Order, OrderItem, User, sequelize } = db;
-// GET / - Get all orders with filtering (Admin only)
 
 
 router.get('/my-orders', authenticate, async (req, res) => {
@@ -59,7 +58,7 @@ router.post('/', authenticate, async (req, res) => {
         }
 
         const newOrder = await Order.create({
-            user_id: finalUserId, // <-- Use the correctly determined user ID
+            user_id: finalUserId,
             total_price: calculatedTotalPrice,
             status: 'completed',
             customer_name: customer_name,
@@ -76,7 +75,6 @@ router.post('/', authenticate, async (req, res) => {
 
         await transaction.commit();
         
-        // Return the original offline ID to help the client clean up its local database
         res.status(201).json({ 
             message: 'Order placed successfully!', 
             orderId: newOrder.id,
