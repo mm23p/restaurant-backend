@@ -29,12 +29,8 @@ router.post('/', authenticate, async (req, res) => {
     try {
         const { items, customer_name, table, userId: offlineUserId, offlineId } = req.body;
 
-        // --- INTELLIGENT USER DETECTION ---
-        // Priority 1: Use the userId from the request body (for a synced offline order).
-        // Priority 2: Fall back to the user from the auth token (for a normal online order).
         const finalUserId = offlineUserId || (req.user && req.user.id);
 
-        // --- VALIDATION ---
         if (!finalUserId) {
             throw new Error('User could not be identified for this order.');
         }
@@ -51,7 +47,7 @@ router.post('/', authenticate, async (req, res) => {
 
             if (menuItem.track_quantity) {
                 if (menuItem.quantity < requestedItem.quantity) {
-                    throw new Error(`Not enough stock for '${menuItem.name}'.`);
+                    throw new Error(`Not enough stock for '${menuItem.name}'.Only ${menuItem.quantity} left.`);
                 }
                 menuItem.quantity -= requestedItem.quantity;
                 if (menuItem.quantity <= 0) {
