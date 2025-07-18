@@ -20,11 +20,14 @@ import approvalRoutes from './routes/approvalRoutes.js'; // <-- The missing impo
 const app = express();
 
 // CORS configuration (no changes needed here)
-const allowedOrigins = [
+/* const allowedOrigins = [
   'https://restaurant-frontend-ah3z.onrender.com',
   'http://localhost:3000'
-];
-app.use(cors({
+]; */
+
+const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+/* app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -33,7 +36,19 @@ app.use(cors({
     }
   },
   credentials: true
+})); */
+
+app.use(cors({
+  origin: function (origin, callback) {
+   if (!origin || origin === allowedOrigin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
 }));
+
 
 app.use(express.json());
 
